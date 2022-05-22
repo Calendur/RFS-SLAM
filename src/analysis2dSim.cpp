@@ -30,9 +30,11 @@
 
 #include <assert.h>
 #include <stdio.h>
+
 #include <boost/filesystem.hpp>
 #include <string>
 #include <vector>
+
 #include "COLA.hpp"
 #include "GaussianMixture.hpp"
 #include "Landmark.hpp"
