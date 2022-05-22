@@ -1,5 +1,7 @@
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
+
+cmake_policy(SET CMP0054 NEW)
 
 #
 # If the user specifies -DCMAKE_BUILD_TYPE on the command line, take their definition
@@ -18,22 +20,6 @@ SET(RFSSLAM_MINOR_VERSION 1)
 SET(RFSSLAM_PATCH_VERSION 0)
 SET(RFSSLAM_VERSION ${RFSSLAM_MAJOR_VERSION}.${RFSSLAM_MINOR_VERSION}.${RFSSLAM_PATCH_VERSION})
 message(STATUS "RFSSLAM Version ${RFSSLAM_VERSION}")
-
-# Compiler settings
-# Note: to change compiler, use for example...
-# cmake -D CMAKE_C_COMPILER=gcc CMAKE_CXX_COMPILER=c++ .
-SET(CMAKE_C_COMPILER "gcc")
-SET(CMAKE_CXX_COMPILER "g++")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native ")
-#MESSAGE("CMAKE_CXX_COMPILTER_ID = ${CMAKE_CXX_COMPILER_ID}")
-IF(APPLE)
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-ignored-qualifiers ") # For Eigen const warnings
-  IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    MESSAGE("NOTE: Libraries being linked to RFSSLAM must also be compiled using GCC")
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-enum-compare ") # For Eigen enum compare warnings
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wa,-q ") #required for march=native errors. This forces clang assembler to be used, and will produce some argument unused warnings. 
-  ENDIF()
-ENDIF()
 
 # OpenMP
 IF(APPLE AND ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang"))
@@ -89,16 +75,12 @@ enable_testing()
 #find_package(GTest REQUIRED)
 
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
-#MESSAGE("CMAKE_RUNTIME_OUTPUT_DIRECTORY = " ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ./lib)
-#MESSAGE("CMAKE_LIBRARY_OUTPUT_DIRECTORY = " ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ./lib)
-#MESSAGE("CMAKE_ARCHIVE_OUTPUT_DIRECTORY = " ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
 
 FILE(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/bin/examples")
 FILE(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/bin/test")
 
-#ADD_SUBDIRECTORY()
 INCLUDE_DIRECTORIES(include)
 INCLUDE_DIRECTORIES(src)
 INCLUDE_DIRECTORIES(test)
@@ -109,7 +91,25 @@ IF(GTEST_FOUND)
 ENDIF()
 #LINK_DIRECTORIES()
 
-ADD_LIBRARY(rfsslam 
+ADD_LIBRARY(rfsslam
+  include/TimeStamp.hpp
+  include/Timer.hpp
+  include/Frame.hpp
+  include/ProcessModel_Odometry1D.hpp 
+  include/ProcessModel_Odometry2D.hpp
+  include/ProcessModel_Ackerman2D.hpp
+  include/MeasurementModel_Rng1D.hpp
+  include/MeasurementModel_RngBrg.hpp
+  include/MeasurementModel_XY.hpp
+  include/MeasurementModel_VictoriaPark.hpp
+  include/KalmanFilter_RngBrg.hpp
+  include/HungarianMethod.hpp
+  include/MurtyAlgorithm.hpp
+  include/BruteForceAssignment.hpp
+  include/CostMatrix.hpp
+  include/PermutationLexicographic.hpp
+  include/MatrixPermanent.hpp
+  include/misc/MemProfile.hpp
   src/TimeStamp.cpp 
   src/Timer.cpp
   src/Frame.cpp
