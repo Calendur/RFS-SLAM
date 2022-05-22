@@ -86,7 +86,7 @@ ENDIF()
 # run cmake . and make  . After compiling , 
 # move libgtest_main.a and libgtest.a to /usr/lib
 enable_testing()
-find_package(GTest REQUIRED)
+#find_package(GTest REQUIRED)
 
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
 #MESSAGE("CMAKE_RUNTIME_OUTPUT_DIRECTORY = " ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
