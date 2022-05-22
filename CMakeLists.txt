@@ -3,6 +3,8 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 
 cmake_policy(SET CMP0054 NEW)
 
+SET( CMAKE_CXX_STANDARD 17 )
+
 #
 # If the user specifies -DCMAKE_BUILD_TYPE on the command line, take their definition
 # and dump it in the cache along with proper documentation, otherwise set CMAKE_BUILD_TYPE
@@ -21,21 +23,11 @@ SET(RFSSLAM_PATCH_VERSION 0)
 SET(RFSSLAM_VERSION ${RFSSLAM_MAJOR_VERSION}.${RFSSLAM_MINOR_VERSION}.${RFSSLAM_PATCH_VERSION})
 message(STATUS "RFSSLAM Version ${RFSSLAM_VERSION}")
 
-# OpenMP
-IF(APPLE AND ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang"))
-  SET(USE_OPENMP OFF) # OpenMP does not yet work with Clang, but hopefully soon
-ELSE()
-  SET(USE_OPENMP ON CACHE BOOL "Use OpenMP to compile multithreaded versions of SLAM algorithms.")
-ENDIF()
-IF(USE_OPENMP)
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp ")
-ENDIF()
-
 # Boost
+set(Boost_USE_STATIC_LIBS        ON)
+set(Boost_USE_MULTITHREADED      ON)
+set(Boost_USE_STATIC_RUNTIME    OFF)
 FIND_PACKAGE(Boost COMPONENTS timer chrono system filesystem graph program_options REQUIRED)
-# set(Boost_USE_STATIC_LIBS ON)
-set(Boost_USE_MULTITHREADED ON) 
-# set(Boost_USE_STATIC_RUNTIME ON)
 
 # For cmake custom library searches
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -89,7 +81,6 @@ INCLUDE_DIRECTORIES(${EIGEN_INCLUDE_DIRS})
 IF(GTEST_FOUND)
   INCLUDE_DIRECTORIES(${GTEST_INCLUDE_DIRS})
 ENDIF()
-#LINK_DIRECTORIES()
 
 ADD_LIBRARY(rfsslam
   include/TimeStamp.hpp
@@ -132,7 +123,8 @@ ADD_LIBRARY(rfsslam
 TARGET_LINK_LIBRARIES(rfsslam PUBLIC Boost::boost Boost::timer Boost::graph)
 
 ADD_EXECUTABLE(rbphdslam2dSim src/rbphdslam2dSim.cpp)
-TARGET_LINK_LIBRARIES(rbphdslam2dSim ${Boost_LIBRARIES} rfsslam ${Perftools_PROFILER_LIBRARY} ${Perftools_TCMALLOC_LIBRARY})
+TARGET_LINK_LIBRARIES(rbphdslam2dSim PRIVATE rfsslam)
+TARGET_LINK_LIBRARIES(rbphdslam2dSim PRIVATE Boost::filesystem Boost::program_options)
 
 ADD_EXECUTABLE(fastslam2dSim src/fastslam2dSim.cpp)
 TARGET_LINK_LIBRARIES(fastslam2dSim ${Boost_LIBRARIES} rfsslam ${Perftools_PROFILER_LIBRARY} ${Perftools_TCMALLOC_LIBRARY}) 

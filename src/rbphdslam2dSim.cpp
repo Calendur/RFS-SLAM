@@ -30,13 +30,13 @@
 
 #define BOOST_NO_CXX11_SCOPED_ENUMS  // required for boost/filesystem to work with C++11
 #include <stdio.h>
-#include <sys/ioctl.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
+#include <random>
 #include <string>
 
 #include "KalmanFilter_RngBrg.hpp"
@@ -51,6 +51,10 @@
 #endif
 
 using namespace rfs;
+
+std::random_device randomDevice;
+std::mt19937_64 randomEngine(randomDevice());
+std::uniform_real_distribution<double> uniformDist(0, 1);
 
 /**
  * \class Simulator_RBPHDSLAM_2d
@@ -148,7 +152,7 @@ class Simulator_RBPHDSLAM_2d
      */
     void generateTrajectory(int randSeed = 0)
     {
-        srand48(randSeed);
+        randomEngine.seed(randSeed);
 
         TimeStamp t;
         int seg = 0;
@@ -181,13 +185,13 @@ class Simulator_RBPHDSLAM_2d
             else if (k >= kMax_ / nSegments_ * seg)
             {
                 seg++;
-                double dx = drand48() * max_dx_ * dT_;
+                double dx = uniformDist(randomEngine) * max_dx_ * dT_;
                 while (dx < min_dx_ * dT_)
                 {
-                    dx = drand48() * max_dx_ * dT_;
+                    dx = uniformDist(randomEngine) * max_dx_ * dT_;
                 }
-                double dy = (drand48() * max_dy_ * 2 - max_dy_) * dT_;
-                double dz = (drand48() * max_dz_ * 2 - max_dz_) * dT_;
+                double dy = (uniformDist(randomEngine) * max_dy_ * 2 - max_dy_) * dT_;
+                double dz = (uniformDist(randomEngine) * max_dz_ * 2 - max_dz_) * dT_;
                 MotionModel_Odometry2d::TInput::Vec d;
                 MotionModel_Odometry2d::TInput::Vec dCovDiag;
                 d << dx, dy, dz;
@@ -259,8 +263,8 @@ class Simulator_RBPHDSLAM_2d
                 MeasurementModel_RngBrg::TPose pose;
                 MeasurementModel_RngBrg::TMeasurement measurementToCreateLandmark;
                 MeasurementModel_RngBrg::TMeasurement::Vec z;
-                double r = drand48() * rangeLimitMax_;
-                double b = drand48() * 2 * PI;
+                double r = uniformDist(randomEngine) * rangeLimitMax_;
+                double b = uniformDist(randomEngine) * 2 * PI;
                 z << r, b;
                 measurementToCreateLandmark.set(z);
                 MeasurementModel_RngBrg::TLandmark lm;
@@ -323,7 +327,8 @@ class Simulator_RBPHDSLAM_2d
                 success = measurementModel.sample(groundtruth_pose_[k], groundtruth_landmark_[m], z_m_k);
                 if (success)
                 {
-                    if (z_m_k.get(0) <= rangeLimitMax_ && z_m_k.get(0) >= rangeLimitMin_ && drand48() <= Pd_)
+                    if (z_m_k.get(0) <= rangeLimitMax_ && z_m_k.get(0) >= rangeLimitMin_ &&
+                        uniformDist(randomEngine) <= Pd_)
                     {
                         z_m_k.setTime(t);
                         // z_m_k.setCov(R);
@@ -338,7 +343,7 @@ class Simulator_RBPHDSLAM_2d
             }
 
             // False alarms
-            double randomNum  = drand48();
+            double randomNum  = uniformDist(randomEngine);
             int nClutterToGen = 0;
             while (randomNum > poissonCmf[nClutterToGen])
             {
@@ -346,9 +351,9 @@ class Simulator_RBPHDSLAM_2d
             }
             for (int i = 0; i < nClutterToGen; i++)
             {
-                double r = drand48() * rangeLimitMax_;
-                while (r < rangeLimitMin_) r = drand48() * rangeLimitMax_;
-                double b = drand48() * 2 * PI - PI;
+                double r = uniformDist(randomEngine) * rangeLimitMax_;
+                while (r < rangeLimitMin_) r = uniformDist(randomEngine) * rangeLimitMax_;
+                double b = uniformDist(randomEngine) * 2 * PI - PI;
                 MeasurementModel_RngBrg::TMeasurement z_clutter;
                 MeasurementModel_RngBrg::TMeasurement::Vec z;
                 z << r, b;
@@ -550,25 +555,6 @@ class Simulator_RBPHDSLAM_2d
             if (k % 100 == 0 || k == kMax_ - 1)
             {
                 float progressPercent = float(k + 1) / float(kMax_);
-                int progressBarW      = 50;
-                struct winsize ws;
-                if (ioctl(1, TIOCGWINSZ, &ws) >= 0)
-                    progressBarW = ws.ws_col - 30;
-                int progressPos = progressPercent * progressBarW;
-                if (progressBarW >= 50)
-                {
-                    std::cout << "[";
-                    for (int i = 0; i < progressBarW; i++)
-                    {
-                        if (i < progressPos)
-                            std::cout << "=";
-                        else if (i == progressPos)
-                            std::cout << ">";
-                        else
-                            std::cout << " ";
-                    }
-                    std::cout << "] ";
-                }
                 std::cout << "k = " << k << " (" << int(progressPercent * 100.0) << " %)\r";
                 std::cout.flush();
             }
@@ -878,14 +864,9 @@ int main(int argc, char *argv[])
         seed = vm["seed"].as<int>();
         std::cout << "Simulation random seed manually set to: " << seed << std::endl;
     }
-    srand48(seed);
-
-    // boost::timer::auto_cpu_timer *timer = new boost::timer::auto_cpu_timer(6, "Simulation run time: %ws\n");
+    randomEngine.seed(seed);
 
     sim.run();
-
-    // std::cout << "mem use: " << MemProfile::getCurrentRSS() << "(" << MemProfile::getPeakRSS() << ")\n";
-    // delete timer;
 
     return 0;
 }
