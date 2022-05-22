@@ -1,6 +1,8 @@
 README
 ===============
 
+This is a fork from `https://github.com/kykleung/RFS-SLAM`
+
 ### Summary ###
 
 The main purpose of this library is promote research in random
@@ -13,14 +15,14 @@ when any related work is published. Any feedback will be appreciated.
 
 * License: New BSD
 * Version: 1.2.0
-* Compiles with gcc on Linux (Ubuntu 13.04, 13.10, 14.04)
-* Compiles with llvm on Mac (OSX 10.10)
+* should compile with gcc on Linux (Ubuntu 13.04, 13.10, 14.04)
+* Compiles with Microsoft Visual Studio 2019 on Windows
 
 ### Installation ###
 
 #### Source ####
 
-Obtain from git repository: `https://kykleung@bitbucket.org/kykleung/phdfilter.git`
+Obtain from git repository: `https://github.com/Calendur/RFS-SLAM`
 
 #### C++ Library Dependencies ####
 
@@ -32,17 +34,7 @@ Obtain from git repository: `https://kykleung@bitbucket.org/kykleung/phdfilter.g
     * graph
     * program_options
 * Eigen (version 3.0.0 minimum)
-* gtest (optional)
   
-    If using Ubuntu apt-get to install: 
-
-    1. `sudo apt-get install libgtest-dev`
-    2. `cd /usr/src/gtest`
-    3. `cmake .`
-    4. `make`
-    5. `sudo mv libgtest_main.a /usr/lib/`
-    6. `sudo mv libgtest.a /usr/lib/`
-
 #### Other Dependencies ####
 
 For visualizing 2-D SLAM results
@@ -117,19 +109,6 @@ Set `saveMoive=True` to generate a mp4 file.
 
 For animating Victoria Park dataset results, run: `scripts/VictoriaPark/animate_VictoriaPark.py [results_dir]`.
 Use `-h` or `--help` to see options.
-
-#### Performance Profiling Tools ####
-
-Performance profiling is currently available for:
-  - `bin/rbphdslam2dSim`
-  - `bin/rbphdslam_VictoriaPark`
-  - `bin/fastslam2dSim`
-  - `bin/fastslam_VictoriaPark`
-
-Use `ccmake` to turn on `USE_CPU_PROFILER` and or `USE_HEAP_PROFILER`.
-Performance profiles are recorded in `.prof` files in the current directory.
-Use `google-pprof` to parse the profiles.
-At the moment, profiling does not provide meaningful results on OS X machines due to Address space layout randomization (ASLR).
 
 ### Version History ###
 
