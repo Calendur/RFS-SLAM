@@ -26,7 +26,6 @@ Frame2d::~Frame2d()
 
 Frame2d Frame2d::operator*(Frame2d const &F_c_d)
 {
-    double a_b_c, a_c_d;
     RotMat R_b_c, R_c_d, R_b_d;
     PosVec t_c_b_b, t_d_c_c, t_d_b_b;
 

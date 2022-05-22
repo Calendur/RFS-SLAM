@@ -33,6 +33,7 @@
 #include <float.h>
 
 #include <iostream>
+#include <vector>
 
 namespace rfs
 {
@@ -52,14 +53,10 @@ double MatPerm::calc(Eigen::MatrixXd &A)
     }
 
     int n = A.rows();
-    double x[n];
+    std::vector<double> x(n, 0.0);
     double p = 0;
     double s = -1;
-    int g[n];
-    for (int i = 0; i < n; i++)
-    {
-        g[i] = 0;
-    }
+    std::vector<int> g(n, 0);
 
     for (int i = 0; i < n; i++)
     {

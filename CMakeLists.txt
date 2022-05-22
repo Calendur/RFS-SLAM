@@ -33,9 +33,9 @@ ENDIF()
 
 # Boost
 FIND_PACKAGE(Boost COMPONENTS timer chrono system filesystem graph program_options REQUIRED)
-set(Boost_USE_STATIC_LIBS ON)
+# set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON) 
-set(Boost_USE_STATIC_RUNTIME ON)
+# set(Boost_USE_STATIC_RUNTIME ON)
 
 # For cmake custom library searches
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -129,7 +129,7 @@ ADD_LIBRARY(rfsslam
   src/MatrixPermanent.cpp
   src/misc/memProfile.cpp
   )
-TARGET_LINK_LIBRARIES(rfsslam ${Boost_LIBRARIES})
+TARGET_LINK_LIBRARIES(rfsslam PUBLIC Boost::boost Boost::timer Boost::graph)
 
 ADD_EXECUTABLE(rbphdslam2dSim src/rbphdslam2dSim.cpp)
 TARGET_LINK_LIBRARIES(rbphdslam2dSim ${Boost_LIBRARIES} rfsslam ${Perftools_PROFILER_LIBRARY} ${Perftools_TCMALLOC_LIBRARY})

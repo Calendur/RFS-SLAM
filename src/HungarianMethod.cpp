@@ -47,9 +47,9 @@ bool HungarianMethod::run<CostMatrix>(CostMatrix &C, int n, int *soln, double *c
     if (n_reduced > 1)
     {
         // reduced cost matrix available
-        int soln_reduced[n_reduced];
+        std::vector<int> soln_reduced(n_reduced, 0);
         double score_reduced = 0;
-        if (run(C_reduced, n_reduced, soln_reduced, &score_reduced, maximize))
+        if (run(C_reduced, n_reduced, soln_reduced.data(), &score_reduced, maximize))
         {
             for (int n = 0; n < n_reduced; n++)
             {

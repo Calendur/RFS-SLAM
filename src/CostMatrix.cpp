@@ -299,15 +299,8 @@ CostMatrix::~CostMatrix()
 
 void CostMatrix::reduce(double lim, bool minVal)
 {
-    int nMatch_i[n_];  // number of possible matches
-    int nMatch_j[n_];
-    int best_score[n_];
-    for (int n = 0; n < n_; n++)
-    {
-        nMatch_i[n]   = 0;
-        nMatch_j[n]   = 0;
-        best_score[n] = lim;
-    }
+    std::vector<int> nMatch_i(n_, 0);  // number of possible matches
+    std::vector<int> nMatch_j(n_, 0);
 
     for (int i = 0; i < n_; i++)
     {

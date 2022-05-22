@@ -164,7 +164,7 @@ class CostMatrix : public CostMatrixGeneral
     double **C_reduced_;               /**< reduced cost matrix with fixed assignments */
     std::vector<int> a_fixed_;         /**< fixed assignments */
     std::vector<int> a_fixed_reverse_; /**< reverse fixed assignments */
-    int n_;                            /**< size of C */
+    int const n_;                            /**< size of C */
     int n_reduced_;                    /**< size of C_reduced */
     std::vector<int> i_reduced_;       /**< Index remapping for the reduced matrix */
     std::vector<int> j_reduced_;       /**< Index remapping for the reduced matrix */

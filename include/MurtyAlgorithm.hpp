@@ -213,12 +213,12 @@ class Murty
     void setRealAssignmentBlock(unsigned int nR, unsigned int nC);
 
   private:
-    MurtyNode::Ptr root_; /**< The best linear assignment */
-    int k_;               /**< number of solutions found */
-    double **C_;          /**< the nxn score matrix */
-    double **C_t_;        /**< temporary score matrix */
-    unsigned int n_;      /**< dimension of C_ and C_t_*/
-    HungarianMethod lam_; /**< Linear assignment method */
+    MurtyNode::Ptr root_;  /**< The best linear assignment */
+    int k_;                /**< number of solutions found */
+    double **C_;           /**< the nxn score matrix */
+    double **C_t_;         /**< temporary score matrix */
+    unsigned int const n_; /**< dimension of C_ and C_t_*/
+    HungarianMethod lam_;  /**< Linear assignment method */
     std::priority_queue<MurtyNode *, std::vector<MurtyNode *>, MurtyNodeCompare>
         pq; /**< Priority queue for easy retrieval of node with highest score */
     double bestScore_;

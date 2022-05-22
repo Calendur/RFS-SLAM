@@ -193,15 +193,6 @@ int Murty::findNextBest(Assignment &assignment, double &score)
     pq.pop();
 
     Assignment a_parent = parent->getAssignment();
-    bool Z_pairedToReal_M[n_];
-    for (int i = 0; i < n_; i++)
-    {
-        Z_pairedToReal_M[i] = false;
-    }
-    for (int i = 0; i < realAssign_nR_; i++)
-    {
-        Z_pairedToReal_M[a_parent[i]] = true;
-    }
 
     //----- partition this node (into  - 1 - parent_partition_id parts) -----//
     // printf("\n************************\n");
@@ -219,11 +210,7 @@ int Murty::findNextBest(Assignment &assignment, double &score)
         MurtyNode *p = new MurtyNode(n, n_);
         parent->addChild(p);
         Assignment a(new int[n_]);
-        bool freeCol[n_];
-        for (int i = 0; i < n_; i++)
-        {
-            freeCol[i] = true;
-        }
+        std::vector<bool> freeCol(n_, true);
         double assignmentFixedScore = 0;
 
         //----- Identify fixed assignments -----//
@@ -248,10 +235,10 @@ int Murty::findNextBest(Assignment &assignment, double &score)
 
         //----- build up the cost matrix to solve from non-fixed assignemnts-----//
         int nFreeAssignments = n_ - n;
-        int rowRemap[nFreeAssignments];  // find entry in original matrix from reduced matrix
-        int rowRemapR[n_];               // find entry in reduced matrix from original matrix (reverse remap)
-        int colRemap[nFreeAssignments];
-        int colRemapR[n_];
+        std::vector<int> rowRemap(nFreeAssignments, 0);  // find entry in original matrix from reduced matrix
+        std::vector<int> rowRemapR(n_, 0);  // find entry in reduced matrix from original matrix (reverse remap)
+        std::vector<int> colRemap(nFreeAssignments, 0);
+        std::vector<int> colRemapR(n_, 0);
         int nFreeCols = 0;
 
         for (int i = 0; i < nFreeAssignments; i++)
@@ -358,8 +345,8 @@ int Murty::findNextBest(Assignment &assignment, double &score)
             pq.push(p);
         }
         else
-        {   // no solution possible... again, do we ever get to this case?
-            // printf("No solution possible with this partition\n");
+        {  // no solution possible... again, do we ever get to this case?
+           // printf("No solution possible with this partition\n");
             /*for(int i = 0; i < n_; i++){
               a[i] = -1;
               }
