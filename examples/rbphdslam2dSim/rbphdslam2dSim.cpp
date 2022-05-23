@@ -36,25 +36,14 @@
 #include <boost/program_options.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
-#include <random>
 #include <string>
 
 #include "KalmanFilter_RngBrg.hpp"
 #include "ProcessModel_Odometry2D.hpp"
 #include "RBPHDFilter.hpp"
-
-#ifdef _PERFTOOLS_CPU
-#include <gperftools/profiler.h>
-#endif
-#ifdef _PERFTOOLS_HEAP
-#include <gperftools/heap-profiler.h>
-#endif
+#include "RandomNumber.hpp"
 
 using namespace rfs;
-
-std::random_device randomDevice;
-std::mt19937_64 randomEngine(randomDevice());
-std::uniform_real_distribution<double> uniformDist(0, 1);
 
 /**
  * \class Simulator_RBPHDSLAM_2d
@@ -152,7 +141,7 @@ class Simulator_RBPHDSLAM_2d
      */
     void generateTrajectory(int randSeed = 0)
     {
-        randomEngine.seed(randSeed);
+        RandomNumber::seed(randSeed);
 
         TimeStamp t;
         int seg = 0;
@@ -185,13 +174,13 @@ class Simulator_RBPHDSLAM_2d
             else if (k >= kMax_ / nSegments_ * seg)
             {
                 seg++;
-                double dx = uniformDist(randomEngine) * max_dx_ * dT_;
+                double dx = RandomNumber::getRandomDouble() * max_dx_ * dT_;
                 while (dx < min_dx_ * dT_)
                 {
-                    dx = uniformDist(randomEngine) * max_dx_ * dT_;
+                    dx = RandomNumber::getRandomDouble() * max_dx_ * dT_;
                 }
-                double dy = (uniformDist(randomEngine) * max_dy_ * 2 - max_dy_) * dT_;
-                double dz = (uniformDist(randomEngine) * max_dz_ * 2 - max_dz_) * dT_;
+                double dy = (RandomNumber::getRandomDouble() * max_dy_ * 2 - max_dy_) * dT_;
+                double dz = (RandomNumber::getRandomDouble() * max_dz_ * 2 - max_dz_) * dT_;
                 MotionModel_Odometry2d::TInput::Vec d;
                 MotionModel_Odometry2d::TInput::Vec dCovDiag;
                 d << dx, dy, dz;
@@ -263,8 +252,8 @@ class Simulator_RBPHDSLAM_2d
                 MeasurementModel_RngBrg::TPose pose;
                 MeasurementModel_RngBrg::TMeasurement measurementToCreateLandmark;
                 MeasurementModel_RngBrg::TMeasurement::Vec z;
-                double r = uniformDist(randomEngine) * rangeLimitMax_;
-                double b = uniformDist(randomEngine) * 2 * PI;
+                double r = RandomNumber::getRandomDouble() * rangeLimitMax_;
+                double b = RandomNumber::getRandomDouble() * 2 * PI;
                 z << r, b;
                 measurementToCreateLandmark.set(z);
                 MeasurementModel_RngBrg::TLandmark lm;
@@ -328,7 +317,7 @@ class Simulator_RBPHDSLAM_2d
                 if (success)
                 {
                     if (z_m_k.get(0) <= rangeLimitMax_ && z_m_k.get(0) >= rangeLimitMin_ &&
-                        uniformDist(randomEngine) <= Pd_)
+                        RandomNumber::getRandomDouble() <= Pd_)
                     {
                         z_m_k.setTime(t);
                         // z_m_k.setCov(R);
@@ -343,7 +332,7 @@ class Simulator_RBPHDSLAM_2d
             }
 
             // False alarms
-            double randomNum  = uniformDist(randomEngine);
+            double randomNum  = RandomNumber::getRandomDouble();
             int nClutterToGen = 0;
             while (randomNum > poissonCmf[nClutterToGen])
             {
@@ -351,9 +340,8 @@ class Simulator_RBPHDSLAM_2d
             }
             for (int i = 0; i < nClutterToGen; i++)
             {
-                double r = uniformDist(randomEngine) * rangeLimitMax_;
-                while (r < rangeLimitMin_) r = uniformDist(randomEngine) * rangeLimitMax_;
-                double b = uniformDist(randomEngine) * 2 * PI - PI;
+                double r = RandomNumber::getRandomDouble(rangeLimitMin_, rangeLimitMax_);
+                double b = RandomNumber::getRandomDouble(-PI, PI);
                 MeasurementModel_RngBrg::TMeasurement z_clutter;
                 MeasurementModel_RngBrg::TMeasurement::Vec z;
                 z << r, b;
@@ -864,7 +852,7 @@ int main(int argc, char *argv[])
         seed = vm["seed"].as<int>();
         std::cout << "Simulation random seed manually set to: " << seed << std::endl;
     }
-    randomEngine.seed(seed);
+    RandomNumber::seed(seed);
 
     sim.run();
 

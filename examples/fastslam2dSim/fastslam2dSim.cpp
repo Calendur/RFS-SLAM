@@ -30,7 +30,6 @@
 
 #define BOOST_NO_CXX11_SCOPED_ENUMS  // required for boost/filesystem to work with C++11
 #include <stdio.h>
-#include <sys/ioctl.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
@@ -43,13 +42,7 @@
 #include "KalmanFilter_RngBrg.hpp"
 #include "MeasurementModel_RngBrg.hpp"
 #include "ProcessModel_Odometry2D.hpp"
-
-#ifdef _PERFTOOLS_CPU
-#include <gperftools/profiler.h>
-#endif
-#ifdef _PERFTOOLS_HEAP
-#include <gperfools/heap-profiler.h>
-#endif
+#include "RandomNumber.hpp"
 
 using namespace rfs;
 
@@ -140,7 +133,7 @@ class Simulator_FastSLAM_2d
     /** Generate a random trajectory in 2d space */
     void generateTrajectory(int randSeed = 0)
     {
-        srand48(randSeed);
+        RandomNumber::seed(randSeed);
 
         TimeStamp t;
         int seg = 0;
@@ -172,13 +165,9 @@ class Simulator_FastSLAM_2d
             else if (k >= kMax_ / nSegments_ * seg)
             {
                 seg++;
-                double dx = drand48() * max_dx_ * dT_;
-                while (dx < min_dx_ * dT_)
-                {
-                    dx = drand48() * max_dx_ * dT_;
-                }
-                double dy = (drand48() * max_dy_ * 2 - max_dy_) * dT_;
-                double dz = (drand48() * max_dz_ * 2 - max_dz_) * dT_;
+                double dx = RandomNumber::getRandomDouble(min_dx_ * dT_, max_dx_ * dT_);
+                double dy = RandomNumber::getRandomDouble(-max_dy_ * dT_, max_dy_ * dT_);
+                double dz = RandomNumber::getRandomDouble(-max_dz_ * dT_, max_dz_ * dT_);
                 MotionModel_Odometry2d::TInput::Vec d;
                 MotionModel_Odometry2d::TInput::Vec dCovDiag;
                 d << dx, dy, dz;
@@ -251,8 +240,8 @@ class Simulator_FastSLAM_2d
                 MeasurementModel_RngBrg::TPose pose;
                 MeasurementModel_RngBrg::TMeasurement measurementToCreateLandmark;
                 MeasurementModel_RngBrg::TMeasurement::Vec z;
-                double r = drand48() * rangeLimitMax_;
-                double b = drand48() * 2 * PI;
+                double r = RandomNumber::getRandomDouble(0, rangeLimitMax_);
+                double b = RandomNumber::getRandomDouble(0, 2 * PI);
                 z << r, b;
                 measurementToCreateLandmark.set(z);
                 MeasurementModel_RngBrg::TLandmark lm;
@@ -315,7 +304,8 @@ class Simulator_FastSLAM_2d
                 success = measurementModel.sample(groundtruth_pose_[k], groundtruth_landmark_[m], z_m_k);
                 if (success)
                 {
-                    if (z_m_k.get(0) <= rangeLimitMax_ && z_m_k.get(0) >= rangeLimitMin_ && drand48() <= Pd_)
+                    if (z_m_k.get(0) <= rangeLimitMax_ && z_m_k.get(0) >= rangeLimitMin_ &&
+                        RandomNumber::getRandomDouble() <= Pd_)
                     {
                         z_m_k.setTime(t);
                         z_m_k.setCov(R);
@@ -331,7 +321,7 @@ class Simulator_FastSLAM_2d
             }
 
             // False alarms
-            double randomNum  = drand48();
+            double randomNum  = RandomNumber::getRandomDouble();
             int nClutterToGen = 0;
             while (randomNum > poissonCmf[nClutterToGen])
             {
@@ -339,9 +329,8 @@ class Simulator_FastSLAM_2d
             }
             for (int i = 0; i < nClutterToGen; i++)
             {
-                double r = drand48() * rangeLimitMax_;
-                while (r < rangeLimitMin_) r = drand48() * rangeLimitMax_;
-                double b = drand48() * 2 * PI - PI;
+                double r = RandomNumber::getRandomDouble(rangeLimitMin_, rangeLimitMax_);
+                double b = RandomNumber::getRandomDouble(-PI, PI);
                 MeasurementModel_RngBrg::TMeasurement z_clutter;
                 MeasurementModel_RngBrg::TMeasurement::Vec z;
                 z << r, b;
@@ -484,16 +473,6 @@ class Simulator_FastSLAM_2d
     void run()
     {
         printf("Running simulation\n\n");
-
-#ifdef _PERFTOOLS_CPU
-        std::string perfCPU_file = logDirPrefix_ + "fastslam2dSim_cpu.prof";
-        ProfilerStart(perfCPU_file.data());
-#endif
-#ifdef _PERFTOOLS_HEAP
-        std::string perfHEAP_file = logDirPrefix_ + "fastslam2dSim_heap.prof";
-        HeapProfilerStart(perfHEAP_file.data());
-#endif
-
         //////// Initialization at first timestep //////////
 
         if (!logResultsToFile_)
@@ -539,35 +518,11 @@ class Simulator_FastSLAM_2d
             if (k % 100 == 0 || k == kMax_ - 1)
             {
                 float progressPercent = float(k + 1) / float(kMax_);
-                int progressBarW      = 50;
-                struct winsize ws;
-                if (ioctl(1, TIOCGWINSZ, &ws) >= 0)
-                    progressBarW = ws.ws_col - 30;
-                int progressPos = progressPercent * progressBarW;
-                if (progressBarW >= 50)
-                {
-                    std::cout << "[";
-                    for (int i = 0; i < progressBarW; i++)
-                    {
-                        if (i < progressPos)
-                            std::cout << "=";
-                        else if (i == progressPos)
-                            std::cout << ">";
-                        else
-                            std::cout << " ";
-                    }
-                    std::cout << "] ";
-                }
                 std::cout << "k = " << k << " (" << int(progressPercent * 100.0) << " %)\r";
                 std::cout.flush();
             }
             if (k == kMax_ - 1)
                 std::cout << std::endl << std::endl;
-
-#ifdef _PERFTOOLS_HEAP
-            if (k % 20 == 0)
-                HeapProfilerDump("Timestep interval dump");
-#endif
 
             ////////// Prediction Step //////////
 
@@ -649,14 +604,6 @@ class Simulator_FastSLAM_2d
                 }
             }
         }
-
-#ifdef _PERFTOOLS_HEAP
-        HeapProfilerStop();
-#endif
-#ifdef _PERFTOOLS_CPU
-        ProfilerStop();
-#endif
-
 
         std::cout << "Elapsed Timing Information [nsec]\n";
         std::cout << std::setw(15) << std::left << "Prediction" << std::setw(15) << std::setw(6) << std::right
@@ -860,14 +807,9 @@ int main(int argc, char *argv[])
         seed = vm["seed"].as<int>();
         std::cout << "Simulation random seed manually set to: " << seed << std::endl;
     }
-    srand48(seed);
-
-    // boost::timer::auto_cpu_timer *timer = new boost::timer::auto_cpu_timer(6, "Simulation run time: %ws\n");
+    RandomNumber::seed(seed);
 
     sim.run();
-
-    // std::cout << "mem use: " << MemProfile::getCurrentRSS() << "(" << MemProfile::getPeakRSS() << ")\n";
-    // delete timer;
 
     return 0;
 }

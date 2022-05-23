@@ -1,0 +1,5 @@
+PROJECT(fastslam_VictoriaPark)
+
+add_executable(fastslam_VictoriaPark fastslam_VictoriaPark.cpp)
+target_link_libraries(fastslam_VictoriaPark PRIVATE rfsslam)
+target_link_libraries(fastslam_VictoriaPark PRIVATE Boost::filesystem Boost::program_options)

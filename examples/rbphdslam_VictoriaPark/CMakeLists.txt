@@ -1,0 +1,5 @@
+PROJECT(rbphdslam_VictoriaPark)
+
+add_executable(rbphdslam_VictoriaPark rbphdslam_VictoriaPark.cpp)
+target_link_libraries(rbphdslam_VictoriaPark PRIVATE rfsslam)
+target_link_libraries(rbphdslam_VictoriaPark PRIVATE Boost::filesystem Boost::program_options)

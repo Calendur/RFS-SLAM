@@ -31,7 +31,6 @@
 #include <assert.h>
 #define BOOST_NO_CXX11_SCOPED_ENUMS  // required for boost/filesystem to work with C++11
 #include <stdio.h>
-#include <sys/ioctl.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
@@ -45,13 +44,7 @@
 #include "FastSLAM.hpp"
 #include "KalmanFilter_VictoriaPark.hpp"
 #include "ProcessModel_Ackerman2D.hpp"
-
-#ifdef _PERFTOOLS_CPU
-#include <gperftools/profiler.h>
-#endif
-#ifdef _PERFTOOLS_HEAP
-#include <gperftools/heap-profiler.h>
-#endif
+#include "RandomNumber.hpp"
 
 using namespace rfs;
 
@@ -419,15 +412,6 @@ class FastSLAM_VictoriaPark
     /** \brief Process the data and peform SLAM */
     void run()
     {
-#ifdef _PERFTOOLS_CPU
-        std::string perfCPU_file = logDirPrefix_ + "fastslam_VictoriaPark_cpu.prof";
-        ProfilerStart(perfCPU_file.data());
-#endif
-#ifdef _PERFTOOLS_HEAP
-        std::string perfHEAP_file = logDirPrefix_ + "fastslam_VictoriaPark_heap.prof";
-        HeapProfilerStart(perfHEAP_file.data());
-#endif
-
         // Initialization at first timestep
         if (!logResultsToFile_)
         {
@@ -494,35 +478,11 @@ class FastSLAM_VictoriaPark
             if (k % 500 == 0 || k == nMessageToProcess_ - 1)
             {
                 float progressPercent = float(k + 1) / float(nMessageToProcess_);
-                int progressBarW      = 50;
-                struct winsize ws;
-                if (ioctl(1, TIOCGWINSZ, &ws) >= 0)
-                    progressBarW = ws.ws_col - 30;
-                int progressPos = progressPercent * progressBarW;
-                if (progressBarW >= 50)
-                {
-                    std::cout << "[";
-                    for (int i = 0; i < progressBarW; i++)
-                    {
-                        if (i < progressPos)
-                            std::cout << "=";
-                        else if (i == progressPos)
-                            std::cout << ">";
-                        else
-                            std::cout << " ";
-                    }
-                    std::cout << "] ";
-                }
                 std::cout << "k = " << k << " (" << int(progressPercent * 100.0) << " %)\r";
                 std::cout.flush();
             }
             if (k == nMessageToProcess_ - 1)
                 std::cout << std::endl << std::endl;
-
-#ifdef _PERFTOOLS_HEAP
-            if (k % 50 == 0)
-                HeapProfilerDump("Timestep interval dump");
-#endif
 
             if (sensorManagerMsgs_[k].sensorType == SensorManagerMsg::Input)
             {
@@ -584,7 +544,7 @@ class FastSLAM_VictoriaPark
 
                 if (clutterAdded_ > 0)
                 {
-                    double randomNum  = drand48();
+                    double randomNum  = RandomNumber::getRandomDouble();
                     int nClutterToGen = 0;
                     while (randomNum > poissonCmf[nClutterToGen])
                     {
@@ -592,8 +552,9 @@ class FastSLAM_VictoriaPark
                     }
                     for (int i = 0; i < nClutterToGen; i++)
                     {
-                        double r = drand48() * (rangeLimitMax_ - rangeLimitMin_) + rangeLimitMin_;
-                        double b = drand48() * ((bearingLimitMax_ - bearingLimitMin_) + bearingLimitMin_) * PI / 180;
+                        double r = RandomNumber::getRandomDouble(rangeLimitMin_, rangeLimitMax_);
+                        double b =
+                            RandomNumber::getRandomDouble(bearingLimitMin_ * PI / 180, bearingLimitMax_ * PI / 180);
                         double d = 1.0;
                         SLAM_Filter::TMeasurement z_clutter;
                         SLAM_Filter::TMeasurement::Vec z;
@@ -684,14 +645,6 @@ class FastSLAM_VictoriaPark
 
             bestTrajFile.close();
         }
-
-#ifdef _PERFTOOLS_HEAP
-        HeapProfilerStop();
-#endif
-#ifdef _PERFTOOLS_CPU
-        ProfilerStop();
-#endif
-
 
         std::cout << "Elapsed Timing Information [nsec]\n";
         std::cout << std::setw(15) << std::left << "Prediction" << std::setw(15) << std::setw(6) << std::right
@@ -902,13 +855,9 @@ int main(int argc, char *argv[])
         seed = vm["seed"].as<int>();
         std::cout << "Simulation random seed manually set to: " << seed << std::endl;
     }
-    srand48(seed);
-
-    // boost::timer::auto_cpu_timer *timer = new boost::timer::auto_cpu_timer(6, "Run time: %ws\n");
+    RandomNumber::seed(seed);
 
     slam.run();
-
-    // delete timer;
 
     return 0;
 }
