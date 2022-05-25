@@ -570,7 +570,10 @@ void FastSLAM<RobotProcessModel, LmkProcessModel, MeasurementModel, KalmanFilter
 
     // particle indices for update
     std::vector<unsigned int> pi(nH, 0);
-    pi[0] = i;
+    if (nH > 0)
+    {
+        pi[0] = i;
+    }
     if (nH > 1)
     {
         double newWeight = this->particleSet_[i]->getWeight() / nH;
